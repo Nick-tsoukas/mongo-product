@@ -4,7 +4,7 @@ const bodyParser = require('body-parser')
 const app = express();
 
 //bodyParser middles
-bodyParser.urlencoded({extended: false});
+app.use(bodyParser.urlencoded({extended: false}));
 app.use(bodyParser.json());
 
 //spliting routes into different files

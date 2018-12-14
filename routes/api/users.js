@@ -3,8 +3,6 @@ const router = express.Router();
 const gravatar = require('gravatar');
 const bcrypt = require('bcryptjs');
 
-// bodyParser.urlencoded({extended: false});
-// app.use(bodyParser.json());
 
 const User = require('../../models/Users');
 
@@ -18,43 +16,49 @@ router.get('/test', (req, res) => {
 });
 
 router.post('/register', (req, res) => {
-  User.findOne({email: req.body.email})
-  .then(user => {
-    if(user) {
-      return res.status(400).json({email: 'email is already in use'});
-    } else {
 
-      const avatar = gravatar.url(req.body.email, {
-        s: 200,
-        r: 'pg',
-        d: 'mm'
-      })
+  User.findOne({
+      email: req.body.email
+    })
+    .then(user => {
+      if (user) {
+        return res.status(400).json({
+          email: 'email is already in use'
+        });
+      } else {
 
-      const newUser = new User({
-        name: req.body.name,
-        email: req.body.email,
-        avatar: avatar,
-        password: req.body.password
-      });
-
-      bcrypt.genSalt(10, (error, salt) => {
-        bcrypt.hash(newUser.password, salt, (err, hash) => {
-          if(err) {
-            console.log(err)
-          }
-          newUser.password = hash;
-          newUser.save()
-            .then(user => {
-              console.log('user created');
-              res.json(user)
-            })
-            .catch(err => {
-              console.log(err)
-            })
+        const avatar = gravatar.url(req.body.email, {
+          s: '200',
+          r: 'pg',
+          d: 'mm'
         })
-      })
-    }
-  })
+
+        // Creating user from form data
+
+        const newUser = new User({
+          name: req.body.name,
+          email: req.body.email,
+          avatar: avatar,
+          password: req.body.password
+        });
+
+        //encrypts the password and then saves user to database
+
+        bcrypt.genSalt(10, function(err, salt) {
+          bcrypt.hash(newUser.password, salt, function(err, hash) {
+            newUser.password = hash;
+
+            newUser.save()
+              .then(user => {
+                console.log('user created');
+                res.json(user);
+              })
+              .catch(err => console.log(err));
+          });
+        });
+
+      }
+    })
 
 })
 
