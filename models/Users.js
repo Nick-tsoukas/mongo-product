@@ -4,17 +4,17 @@ const Schema = mongoose.Schema;
 const UserSchema = new Schema({
   name: {
     type: String,
-    required: false
+    required: true
   },
 
   email: {
     type: String,
-    required: false
+    required: true
   },
 
   password: {
     type: String,
-    required: false
+    required: true
   },
 
   avatar: {
@@ -27,5 +27,11 @@ const UserSchema = new Schema({
   }
 
 });
+
+// Adding methods the instance of user object 
+UserSchema.methods.speak = function () {
+  var greeting = `Hello My name is ${this.name}`;
+  console.log(greeting);
+}
 
 module.exports = User = mongoose.model('users', UserSchema);

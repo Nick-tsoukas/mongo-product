@@ -50,7 +50,8 @@ router.post('/register', (req, res) => {
 
             newUser.save()
               .then(user => {
-                console.log('user created');
+                user.speak();
+                console.log('user created ============================');
                 res.json(user);
               })
               .catch(err => console.log(err));
