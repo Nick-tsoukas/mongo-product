@@ -6,4 +6,4 @@ for product launch.
 
 ### Tech Notes
 
-Built with MEARN Stack 
+Built with MEARN Stack .
