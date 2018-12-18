@@ -8,6 +8,7 @@ const passport = require('passport');
 
 // Load Input Validation
 const validateRegisterInput = require('../../validation/register');
+const validateLoginInput    = require('../../validation/login');
 
 // Getting User Model from Users.js
 const User = require('../../models/Users');
@@ -68,13 +69,21 @@ router.post('/register', (req, res) => {
 })
 
 router.post('/login', (req, res) => {
+  const {errors, isValid } = validateLoginInput(req.body);
+
+  // Check validation
+  if(!isValid) {
+    return res.status(400).json(errors)
+  }
+
   const email = req.body.email;
   const password = req.body.password;
   //Find user with mongoose email
   User.findOne({email})
     .then(user => {
       if(!user) {
-        res.status(404).json({email: 'User not founnd'})
+        errors.email = "User not found"
+        res.status(404).json(errors)
       }
       // Check password of user
       bcrypt.compare(password, user.password)
@@ -88,7 +97,7 @@ router.post('/login', (req, res) => {
               avatar: user.avatar
             }
 
-            //sign jsonwebtoken
+            // Sign jsonwebtoken and return Token
             jwt.sign(payload, keys.secretOrKey, {expiresIn: 3600}, (err, token) => {
               res.json({
                 success: 'true',
@@ -97,7 +106,8 @@ router.post('/login', (req, res) => {
             });
 
           } else {
-            res.status(400).json({password: 'Password incorrect'})
+            errors.password = "Password is incorrect!"
+            res.status(400).json(errors)
           }
         })
     })
