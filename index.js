@@ -1,6 +1,7 @@
 const express = require('express');
 const mongoose = require('mongoose');
 const bodyParser = require('body-parser')
+const passport  = require('passport');
 const app = express();
 
 //bodyParser middles
@@ -24,10 +25,15 @@ mongoose.connect(db)
     console.log(err);
   })
 
-app.get('/', (req, res) => {
-  res.send("hello dude ");
-});
+// Passport middleware
+// Using JWT stategy
+app.use(passport.initialize());
 
+//passport config
+require('./config/passport')(passport);
+
+
+//express router will handle routes in seperate files
 app.use('/api/users', users);
 app.use('/api/profile', profile);
 app.use('/api/posts', posts);

@@ -2,29 +2,34 @@ const express = require('express');
 const router = express.Router();
 const gravatar = require('gravatar');
 const bcrypt = require('bcryptjs');
+const jwt = require('jsonwebtoken');
+const keys = require('../../config/keys');
+const passport = require('passport');
+
+// Load Input Validation
+const validateRegisterInput = require('../../validation/register');
 
 // Getting User Model from Users.js
 const User = require('../../models/Users');
 
-//Test route Will Remove
-router.get('/test', (req, res) => {
-  res.json({
-    msg: "users works"
-  });
-});
-
 // Creating user
 router.post('/register', (req, res) => {
+  // Destruct return val from validateRegisterInput and proceed to validate
+  const {errors, isValid } = validateRegisterInput(req.body);
 
-  // Checks to see if user already existis
+  // Check validation
+  if(!isValid) {
+    return res.status(400).json(errors)
+  }
+
+  // Checks to see if user already exists
   User.findOne({
       email: req.body.email
     })
     .then(user => {
       if (user) {
-        return res.status(400).json({
-          email: 'email is already in use'
-        });
+        errors.email = 'Email already exists';
+        return res.status(400).json(errors);
       } else {
 
         // Creating the avatar image from gravatar api
@@ -47,10 +52,9 @@ router.post('/register', (req, res) => {
         bcrypt.genSalt(10, function(err, salt) {
           bcrypt.hash(newUser.password, salt, function(err, hash) {
             newUser.password = hash;
-
+         // Adds user to mongo db
             newUser.save()
               .then(user => {
-                user.speak();
                 console.log('user created ============================');
                 res.json(user);
               })
@@ -70,19 +74,43 @@ router.post('/login', (req, res) => {
   User.findOne({email})
     .then(user => {
       if(!user) {
-        res.status(404).json({email: 'user not founnd'})
+        res.status(404).json({email: 'User not founnd'})
       }
       // Check password of user
       bcrypt.compare(password, user.password)
         .then(isMatch => {
           if(isMatch) {
-            //  Will add login to return a jwt token for authentication
-            res.json({msg: 'Success'})
+            //  User matched
+            // create payload jwt
+            const payload = {
+              id: user.id,
+              name: user.name,
+              avatar: user.avatar
+            }
+
+            //sign jsonwebtoken
+            jwt.sign(payload, keys.secretOrKey, {expiresIn: 3600}, (err, token) => {
+              res.json({
+                success: 'true',
+                token: 'Bearer ' + token
+              })
+            });
+
           } else {
             res.status(400).json({password: 'Password incorrect'})
           }
         })
     })
+});
+
+// @route Get api/users/current
+
+router.get('/current', passport.authenticate('jwt', {session: false}), (req, res) => {
+  res.json({
+    id: req.user.id,
+    name: req.user.name,
+    email: req.user.email
+  });
 });
 
 module.exports = router;
